@@ -8,36 +8,15 @@
             fn(el, i, arr);
         }
     };
-    var Binding = function (obj, node) {
-        var nodes = [node];
-        this.addNode = function (node) {
-            nodes.push(node);
-        }
-        this.getNodes = function () {
-            return nodes;
-        }
-        this.toString = function () {
-            return obj;
-        }
-        this.updateData = function (newData, path) {
-            obj = newData;
-            var event = new CustomEvent('data-changed', {
-                detail: newData,
-                bubbles: false
-            });
-            each(this.getNodes, function(node) {
-                node.dispatchEvent(event);
-            });
-            
-            event = new CustomEvent('store-changed', {
-                detail: {
-                    value: newData,
-                    path: path
-                },
-                bubbles: false
-            });
-            win.dispatchEvent(event);            
-        };
+    var triggerStoreUpdate = function triggerStoreUpdate(value, path) {
+        var event = new CustomEvent('store-changed', {
+            detail: {
+                value: value,
+                path: path
+            },
+            bubbles: false
+        });
+        win.dispatchEvent(event);
     };
     var resolvePath = function(path, data) {
         var cursor = data;
@@ -88,28 +67,13 @@
             }
             var obj = resolvePath(source, binder.context || context);
             var value = getValueFromPath(source, binder.context || context);
-            if (value && value instanceof Binding) {
-                value.addNode(binder);
-            } else {
-                obj.cursor[obj.index] = new Binding(value || binder[target], binder);
-            }
+            obj.cursor[obj.index] = value || binder[target];
             binder.boundObject = obj;
             if (['input', 'select', 'textarea'].indexOf(binder.nodeName.toLowerCase()) >= 0) {
                 binder.addEventListener('change', function() {
                     if (source.split('.').pop() === '*') obj.index = obj.cursor.length;
-                    if (typeof obj.cursor[obj.index] === 'undefined') {
-                        obj.cursor[obj.index] = new Binding(this[target], this);
-                    } else {
-                        obj.cursor[obj.index].updateData(this[target], source);
-                    }
-                    var event = new CustomEvent('store-changed', {
-                        detail: {
-                            value: this[target],
-                            path: source
-                        },
-                        bubbles: false
-                    });
-                    win.dispatchEvent(event);
+                    obj.cursor[obj.index] = this[target];
+                    triggerStoreUpdate(this[target], source);
                 }, false);
             }
         });
@@ -136,37 +100,16 @@
                 var startValue = obj.cursor[obj.index];
                 toggler.addEventListener('mouseover', function() {
                     obj.cursor[obj.index] = !startValue;
-                    var event = new CustomEvent('store-changed', {
-                        detail: {
-                            value: !startValue,
-                            path: toToggle
-                        },
-                        bubbles: false
-                    });
-                    win.dispatchEvent(event);                    
+                    triggerStoreUpdate(obj.cursor[obj.index], toToggle, toggler.context || context);
                 });
                 toggler.addEventListener('mouseout', function() {
                     obj.cursor[obj.index] = startValue;
-                    var event = new CustomEvent('store-changed', {
-                        detail: {
-                            value: startValue,
-                            path: toToggle
-                        },
-                        bubbles: false
-                    });
-                    win.dispatchEvent(event);                    
+                    triggerStoreUpdate(obj.cursor[obj.index], toToggle, toggler.context || context);
                 });
             } else {
                 toggler.addEventListener(toggleEvent, function() {
                     obj.cursor[obj.index] = !obj.cursor[obj.index];
-                    var event = new CustomEvent('store-changed', {
-                        detail: {
-                            value: obj.cursor[obj.index],
-                            path: toToggle
-                        },
-                        bubbles: false
-                    });
-                    win.dispatchEvent(event);                    
+                    triggerStoreUpdate(obj.cursor[obj.index], toToggle, toggler.context || context);
                 });
             }
         });        
@@ -197,8 +140,7 @@
         container.context = context;
         if (bindTo) {
             var obj = resolvePath(bindTo, context || store);
-            obj.cursor[obj.index] = new Binding(obj.cursor[obj.index] instanceof Binding ? obj.cursor[obj.index].toString() : obj.cursor[obj.index], this);
-            container.context = obj.cursor[obj.index].toString();
+            container.context = obj.cursor[obj.index] || {};
             context = container.context;
         }
         if (!toLoad.match(/\.js$/)) toLoad += '.js';
@@ -206,11 +148,13 @@
             var code = 'var module = {exports:{}};var require=function(path){return{render:function(data){return "<div data-load=\\"' + toLoad.replace(/\w+(\.\w+)?$/, '') + '" + path + "\\" data-context=\'" + JSON.stringify(data).replace(/\'/g, \'\\\'\') + "\'></div>";}}};' + jsCode + ';return module.exports;';
             return new Function(code)();
         }).then(function(fn) {
-            templates.push({render: function(path) {
-                var data = context || store;
-                container.innerHTML = fn.render(data);
-            },
-            node: container});
+            templates.push({
+                render: function() {
+                    var data = context || store;
+                    container.innerHTML = fn.render(data);
+                },
+                node: container
+            });
             templates[templates.length - 1].render();
             handleBind(container, context);
             handleToggle(container, context);
