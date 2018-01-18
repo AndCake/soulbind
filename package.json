@@ -1,0 +1,11 @@
+{
+  "name": "soulbind",
+  "version": "0.0.1",
+  "description": "An declarative two-way data binding that works implicitly.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Robert Kunze <quixotic.worx@protonmail.com>",
+  "license": "ISC"
+}

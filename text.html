@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <div data-load="./compiled/homepage/mainSlider"></div>
+    <input type="text" data-bind="sliderItems.*"/>
+
+    <div data-load="./compiled/homepage/miniGrid" data-bind="homepage"></div>
+    <script>
+        window.__SoulStore__ = {homepage: {
+            featuredProducts: [{
+                id: '1',
+                url: '/product1',
+                name: 'Tick-B-Gone',
+                image: 'https://pbs.twimg.com/media/BsSPYfNCMAAheeS.png',
+                price: 12.99
+            }, {
+                id: '2',
+                url: '/product2',
+                name: 'Hand Creme',
+                image: 'https://kendrakandlestar.files.wordpress.com/2012/09/potions_trollsnot.jpg',
+                price: 20.95
+            }]
+        }};
+    </script>
+    <script src="./index.js"></script>
+</body>
+</html>
