@@ -22,12 +22,27 @@ You can use the following data attributes:
           {
               "firstName": "Tester"
           }
+
  * data-toggle
      Handles a toggle data attribute.
      The attribute's value can be in the following formats:
      - <context-path> - toggle the selected context path object's property via click event
      - hover:<context-path> - toggle the selected context path object's property on hover
      - <toggle-event>:<context-path> - toggle the selected context path object's property on the given toggle event
+
+     Example:
+    
+        In your template:
+
+            {{#showFilters}}
+                <ul class="filter">
+                    <li>...</li>
+                </ul>
+            {{/showFilters}}
+
+        In your HTML:
+
+            <button data-toggle="showFilters">Toggle filter</button>
 
  * data-action
      Handles data action attributes on click.
@@ -37,6 +52,7 @@ You can use the following data attributes:
      - <action-event>:<action-function>:<parameter> - call the provided action function with a given parameter (function will be called with 4 parameters: node, context, parameter value, parameter name)
      
      After this function was called, a change in data is assumed, therefore a re-render is triggered.
+
      Example:
      
           <div data-action="remove:sliderItems.0">Remove first slider item</div>
@@ -48,9 +64,16 @@ You can use the following data attributes:
                   context.sliderItems.splice(itemPosition, 1);
               }
           }
+
  * data-load
      Handles asynchronous loading of additional templates / fragments. Needs to be a CommonJS module that exports a render(data) function and generates a string. You can use require() in order to load other templates / fragments, as long as they also export the render(data) function.
      If a data-bind attribute is present for the same element, then the data-bind will not update the content but define a sub-set of the data context that will be made available to the render(data) function.
+
+     Example:
+
+         <div data-load="./templates/miniGrid" data-bind="homepage"></div>
+
+         This will load a miniGrid.js template file from the server via fetch and inject the result of the render() function into the div. The render function will be called with the current context's `homepage` property selected (so only data within the `homepage` property is accessible to the render function).
     
  * data-context
      Defines a JSON object that should be the current element's context. Useful, if you want a separate / encapsulated context for a part of your page.
