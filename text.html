@@ -14,6 +14,8 @@
     <input type="text" data-bind="firstName"/>
 
     <div>Random number: <span data-bind="rand"></span></div>
+    <label>Multiplicator: <input type="text" data-bind="rand"/></label>
+
     <div>You have clicked <span data-bind="numberOfClicks">0</span> times.</div>
     <button data-action="incrementClickCounter">Click me</button>
 
@@ -24,7 +26,18 @@
                 var idx = parseInt(variable.split('.')[1], 10);
                 context[variable.split('.')[0]].splice(idx, 1);
             },
-            rand: function() {return Math.floor(Math.random() * 1000);},
+            rand: function(node, context, multiplicator) {
+                if (multiplicator) {
+                    this.multiplicator = multiplicator;
+                }
+                if (!this.multiplicator) {
+                    this.multiplicator = 1000;
+                }
+                if (node.nodeName === 'INPUT' && !multiplicator) {
+                    return this.multiplicator;
+                }
+                return Math.floor(Math.random() * this.multiplicator);
+            }.bind({}),
             numberOfClicks: 0,
             incrementClickCounter: function(node, context) {
                 context.numberOfClicks = ~~context.numberOfClicks;

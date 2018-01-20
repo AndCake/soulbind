@@ -11,7 +11,8 @@ You can use the following data attributes:
      - <context-path> - bind the selected context path object's property to textContent / value (depends on HTML element)
      - <node-property>:<context-path> - bind the selected context path object's property to whatever node property is provided
      
-     Whenever the data changes, this node will reflect the change.
+     Whenever the data changes, this node will reflect the change. If the context path resolves to a function instead of a string / number, then this function will be called with the respective node and it's data context. If the context path is a function and it is bound to a form field, then
+     if the form field's value changes, it's new value is passed into the context path function as the third parameter.
      
      Example:
       
@@ -22,6 +23,27 @@ You can use the following data attributes:
           {
               "firstName": "Tester"
           }
+
+     Example 2:
+
+        <div>Random number: <span data-bind="rand"></span></div>
+        <label>Multiplicator: <input type="text" data-bind="rand"/></label>
+
+        // in your data:
+        {
+            "rand": function(node, context, multiplicator) {
+                if (multiplicator) {
+                    this.multiplicator = multiplicator;
+                }
+                if (!this.multiplicator) {
+                    this.multiplicator = 1000;
+                }
+                if (node.nodeName === 'INPUT' && !multiplicator) {
+                    return this.multiplicator;
+                }
+                return Math.floor(Math.random() * this.multiplicator);
+            }.bind({})
+        }
 
  * data-toggle
      Handles a toggle data attribute.
