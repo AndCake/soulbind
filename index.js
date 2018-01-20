@@ -9,6 +9,9 @@
             fn(el, i, arr);
         }
     };
+    var $ = function(el, selector, fn) {
+        each(el.querySelectorAll(selector), fn);
+    };
     var triggerStoreUpdate = function triggerStoreUpdate(value, path) {
         var event = new CustomEvent('store-changed', {
             detail: {
@@ -74,7 +77,7 @@
     function handleBind(startNode, context) {
         startNode = startNode || doc.body;
         context = context || store;             
-        each(startNode.querySelectorAll('[data-bind]'), function (binder, idx) {
+        $(startNode, '[data-bind]', function (binder, idx) {
             if (binder.bindAttached) return;
             binder.bindAttached = true;
             var pair = binder.dataset.bind.split(':');
@@ -127,7 +130,7 @@
     function handleToggle(startNode, context) {
         startNode = startNode || doc.body;
         context = context || store;
-        each(startNode.querySelectorAll('[data-toggle]'), function (toggler) {
+        $(startNode, '[data-toggle]', function (toggler) {
             if (toggler.toggleAttached) return;
             toggler.toggleAttached = true;
             var pair = toggler.dataset.toggle.split(':');
@@ -186,7 +189,7 @@
     function handleAction(startNode, context) {
         startNode = startNode || doc.body;
         context = context || store;
-        each(startNode.querySelectorAll('[data-action]'), function (action) {
+        $(startNode, '[data-action]', function (action) {
             if (action.actionAttached) return;
             action.actionAttached = true;
             var pair = action.dataset.action.split(':');
@@ -251,7 +254,7 @@
 
     var loadFragment;
     win.addEventListener('store-changed', function(event) {
-        each(doc.body.querySelectorAll('[data-bind]'), function(bound) {
+        $(doc.body, '[data-bind]', function(bound) {
             if (bound.dataset.load) return;
             var pair = bound.dataset.bind.split(':');
             var target = pair[0];
@@ -278,7 +281,7 @@
             handleDataAttributes(template.node, template.node.context);
         });
     });
-    each(doc.body.querySelectorAll('[data-load]'), loadFragment = function(container) {
+    $(doc.body, '[data-load]', loadFragment = function(container) {
         var toLoad = container.dataset.load;
         var bindTo = container.dataset.bind;
         var context = container.dataset.context;
