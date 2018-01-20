@@ -91,11 +91,23 @@
             var value = getValueFromPath(source, binder.context || context);
             obj.cursor[obj.index] = value || binder[target];
             binder.boundObject = obj;
-            binder[target] = obj.cursor[obj.index] || '';
+            var result = obj.cursor[obj.index];
+            if (typeof result === 'function') {
+                result = obj.cursor[obj.index](binder, binder.context || context);
+                if (typeof result !== 'undefined') {
+                    binder[target] = result || '';
+                }
+            } else {
+                binder[target] = result || '';
+            }
             if (['input', 'select', 'textarea'].indexOf(binder.nodeName.toLowerCase()) >= 0) {
                 binder.addEventListener('change', function() {
                     if (source.split('.').pop() === '*') obj.index = obj.cursor.length;
-                    obj.cursor[obj.index] = this[target];
+                    if (typeof obj.cursor[obj.index] === 'function') {
+                        obj.cursor[obj.index](binder, binder.context || context, this[target]);
+                    } else {
+                        obj.cursor[obj.index] = this[target];
+                    }
                     triggerStoreUpdate(this[target], source);
                 }, false);
             }
@@ -248,8 +260,14 @@
                 source = target;
                 target = ['input', 'select', 'textarea'].indexOf(bound.nodeName.toLowerCase()) >= 0 ? 'value' : 'textContent';
             }
-            if (bound.boundObject && bound[target] !== bound.boundObject.cursor[bound.boundObject.index]) {
-                bound[target] = bound.boundObject.cursor[bound.boundObject.index] || '';
+            if (bound.boundObject) {
+                var result = bound.boundObject.cursor[bound.boundObject.index];
+                if (typeof result === 'function') {
+                    result = result(bound, bound.context || store);
+                }
+                if (bound[target] !== result && 'undefined' !== typeof result) {
+                    bound[target] = result || '';
+                }
             }
         });
         templates.forEach(function(template, idx) {
