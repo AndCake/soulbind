@@ -1,7 +1,7 @@
 Soul Bind
 =========
 
-Simple data binding, event handling and support for templating.
+Simple data binding, event handling and support for templating. Weighs in at just 1.9k minified and gzipped and 5k minified.
 
 You can use the following data attributes:
 
@@ -90,6 +90,8 @@ You can use the following data attributes:
  * data-load
      Handles asynchronous loading of additional templates / fragments. Needs to be a CommonJS module that exports a render(data) function and generates a string. You can use require() in order to load other templates / fragments, as long as they also export the render(data) function.
      If a data-bind attribute is present for the same element, then the data-bind will not update the content but define a sub-set of the data context that will be made available to the render(data) function.
+
+     The path provided should be relative to the index.js / index.min.js file and reside on the same server.
 
      Example:
 

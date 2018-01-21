@@ -4,6 +4,7 @@
     var store = win.__SoulStore__ = win.__SoulStore__ || {};
     var templates = [];
     var loadCache = {};
+    var basePath = doc.currentScript.src.replace(/[^\/]+\.js$/, '');
     var each = function (arr, fn) {
         for (var i = 0, len = arr.length, el; el = arr[i], i < len; i += 1) {
             fn(el, i, arr);
@@ -248,6 +249,7 @@
         });
         templates[templates.length - 1].render();
         handleDataAttributes(container, context);
+        return fn;
     }
 
     handleDataAttributes();
@@ -297,9 +299,13 @@
         var loadHandler = handleLoad.bind(null, container, context);
         if (!toLoad.match(/\.js$/)) toLoad += '.js';
         if (loadCache[toLoad]) {
-            return loadHandler(loadCache[toLoad]);
+            if (loadCache[toLoad] instanceof Promise) {
+                loadCache[toLoad].then(loadHandler);
+            } else {
+                return loadHandler(loadCache[toLoad]);
+            }
         }
-        fetch(toLoad).then(function(response){return response.text();}).then(function(jsCode) { 
+        loadCache[toLoad] = fetch(basePath + toLoad).then(function(response){return response.text();}).then(function(jsCode) { 
             var code = 'var module = {exports:{}};var require=function(path){return{render:function(data){return "<div data-load=\\"' + toLoad.replace(/\w+(\.\w+)?$/, '') + '" + path + "\\" data-context=\'" + JSON.stringify(data).replace(/\'/g, \'\\\'\') + "\'></div>";}}};' + jsCode + ';return module.exports;';
             var fn = new Function(code)();
             loadCache[toLoad] = fn;
@@ -337,23 +343,3 @@
     });
     mo.observe(doc.body, {subtree: true, childList: true});
 }(window, document));
-
-// CustomEvent constructor polyfill for IE
-(function () {
-    if (typeof window.CustomEvent === "function") return false;
-
-    function CustomEvent(event, params) {
-        params = params || {
-            bubbles: false,
-            cancelable: false,
-            detail: undefined
-        };
-        var evt = document.createEvent('CustomEvent');
-        evt.initCustomEvent(event, params.bubbles, params.cancelable, params.detail);
-        return evt;
-    }
-
-    CustomEvent.prototype = window.Event.prototype;
-
-    window.CustomEvent = CustomEvent;
-})();
