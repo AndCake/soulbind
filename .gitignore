@@ -1,3 +1,6 @@
 compiled
 node_modules
 package-lock.json
+coverage
+coverage.json
+index.test.js

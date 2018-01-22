@@ -1,7 +1,7 @@
 Soul Bind
 =========
 
-Simple data binding, event handling and support for templating. Weighs in at just 1.9k minified and gzipped and 5k minified.
+Simple data binding, event handling and support for templating. Weighs in at just 2.1k minified and gzipped and 5.1k minified.
 
 You can use the following data attributes:
 
