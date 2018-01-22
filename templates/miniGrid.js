@@ -23,5 +23,21 @@ module.exports = {
     </ul>
 </div>
 `;
-    }
+    },
+
+    styles: `
+.mini-grid .grid-item-container {
+    display: flex;
+    flex-wrap: wrap;
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+.mini-grid .grid-item {
+    flex: 1 1 33%;
+    margin: 0;
+    padding: 0;
+    margin: 0.25em 0.5em;
+}
+`
 };

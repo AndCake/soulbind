@@ -4,14 +4,19 @@
     var store = win.__SoulStore__ = win.__SoulStore__ || {};
     var templates = [];
     var loadCache = {};
-    var basePath = doc.currentScript.src.replace(/[^\/]+\.js$/, '');
+    var basePath = doc.currentScript.src.replace(/[^\/]+\.js(?:\?.*)?$/, '');
     var each = function (arr, fn) {
         for (var i = 0, len = arr.length, el; el = arr[i], i < len; i += 1) {
             fn(el, i, arr);
         }
     };
     var $ = function(el, selector, fn) {
-        each(el.querySelectorAll(selector), fn);
+        var list = el.querySelectorAll('[data-' + selector + ']');
+        if (el.dataset[selector]) {
+            list = [].slice.call(list);
+            list.unshift(el);
+        }
+        each(list, fn);
     };
     var triggerStoreUpdate = function triggerStoreUpdate(value, path) {
         var event = new CustomEvent('store-changed', {
@@ -78,7 +83,7 @@
     function handleBind(startNode, context) {
         startNode = startNode || doc.body;
         context = context || store;             
-        $(startNode, '[data-bind]', function (binder, idx) {
+        $(startNode, 'bind', function (binder, idx) {
             if (binder.bindAttached) return;
             binder.bindAttached = true;
             var pair = binder.dataset.bind.split(':');
@@ -131,7 +136,7 @@
     function handleToggle(startNode, context) {
         startNode = startNode || doc.body;
         context = context || store;
-        $(startNode, '[data-toggle]', function (toggler) {
+        $(startNode, 'toggle', function (toggler) {
             if (toggler.toggleAttached) return;
             toggler.toggleAttached = true;
             var pair = toggler.dataset.toggle.split(':');
@@ -190,7 +195,7 @@
     function handleAction(startNode, context) {
         startNode = startNode || doc.body;
         context = context || store;
-        $(startNode, '[data-action]', function (action) {
+        $(startNode, 'action', function (action) {
             if (action.actionAttached) return;
             action.actionAttached = true;
             var pair = action.dataset.action.split(':');
@@ -256,7 +261,7 @@
 
     var loadFragment;
     win.addEventListener('store-changed', function(event) {
-        $(doc.body, '[data-bind]', function(bound) {
+        $(doc.body, 'bind', function(bound) {
             if (bound.dataset.load) return;
             var pair = bound.dataset.bind.split(':');
             var target = pair[0];
@@ -283,7 +288,7 @@
             handleDataAttributes(template.node, template.node.context);
         });
     });
-    $(doc.body, '[data-load]', loadFragment = function(container) {
+    $(doc.body, 'load', loadFragment = function(container) {
         var toLoad = container.dataset.load;
         var bindTo = container.dataset.bind;
         var context = container.dataset.context;
@@ -305,10 +310,22 @@
                 return loadHandler(loadCache[toLoad]);
             }
         }
-        loadCache[toLoad] = fetch(basePath + toLoad).then(function(response){return response.text();}).then(function(jsCode) { 
+        loadCache[toLoad] = fetch(basePath + toLoad).then(function(response){return response.text();}).then(function(jsCode) {
+            /* istanbul ignore next */
             var code = 'var module = {exports:{}};var require=function(path){return{render:function(data){return "<div data-load=\\"' + toLoad.replace(/\w+(\.\w+)?$/, '') + '" + path + "\\" data-context=\'" + JSON.stringify(data).replace(/\'/g, \'\\\'\') + "\'></div>";}}};' + jsCode + ';return module.exports;';
             var fn = new Function(code)();
             loadCache[toLoad] = fn;
+            var styles = fn.styles;
+            if (typeof styles === 'function') {
+                styles = styles();
+            }
+            var loadedName = toLoad.replace(/.*\/([^\/]+)$/, '$1');
+            if (styles && !doc.getElementById('style-' + loadedName)) {
+                var style = document.createElement('style');
+                style.id = 'style-' + loadedName;
+                style.textContent = styles;
+                doc.head.appendChild(style);
+            }
             return fn;
         }).then(loadHandler);
     });
@@ -325,7 +342,7 @@
                 } else if (node.dataset && node.dataset.action) {
                     handleAction(node);
                 } else if (node.nodeType === 1) {
-                    var nodeList = node.querySelectorAll('[data-load]');
+                    var nodeList = node.querySelectorAll('[data-load], [data-bind], [data-toggle], [data-action]');
                     if (nodeList.length > 0) {
                         arr = arr.concat([].slice.call(nodeList));
                         len = arr.length;

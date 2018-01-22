@@ -4,11 +4,22 @@
   "description": "An declarative two-way data binding that works implicitly.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "uglifyjs index.js -o index.min.js -c -m --screw-ie",
+    "test": "istanbul instrument index.js > index.test.js; karma start karma.conf.js --single-run && istanbul report"
   },
   "author": "Robert Kunze <quixotic.worx@protonmail.com>",
   "license": "ISC",
   "dependencies": {
     "uglify-js": "^3.3.7"
+  },
+  "devDependencies": {
+    "istanbul": "^0.4.5",
+    "karma": "^2.0.0",
+    "karma-mocha": "^1.3.0",
+    "karma-nightmare": "^0.4.14",
+    "karma-phantomjs-launcher": "^1.0.4",
+    "mocha": "^5.0.0",
+    "nyc": "^11.4.1",
+    "pre-commit": "^1.2.2"
   }
 }

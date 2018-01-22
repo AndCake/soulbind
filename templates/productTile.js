@@ -13,5 +13,26 @@ module.exports = {
     </a>
 </div>
 `;
+    },
+
+    styles() {
+        return `
+.product-tile a {
+    text-decoration: none;
+    color: black;
+}
+.product-tile img {
+    width: 100%;
+    border: 0;
+}
+.product-tile .product-name {
+    font-weight: bold;
+}
+.product-tile .product-price {
+    color: #666;
+    font-style: italic;
+    font-size: 0.8em;
+}
+`;
     }
 };
