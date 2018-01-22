@@ -164,6 +164,40 @@ describe('soulbind', () => {
                 done();
             }, 10);
         });
+        it('can bind the template to a specific object in the store', done => {
+            __SoulStore__.testObject = {
+                sliderItems: ['Test', 'Hello']
+            };
+            var check;
+            var div = appendElement(document.body, 'div', {}, '<div data-load="./templates/mainSlider" data-bind="testObject"></div>');
+            setTimeout(check = function() {
+                if (!div.querySelector('ul')) {
+                    return setTimeout(check, 10);
+                }
+                assertEquals(2, div.querySelectorAll('li').length, 'rendered the loaded template');
+                assertEquals('Hello', [].slice.call(div.querySelectorAll('li'), -1)[0].innerHTML, 'rendered the correct context');
+                done();
+            }, 10);
+        });
+        it('can load a template with template-specific styles', done => {
+            var div = appendElement(document.body, 'div', {}, '<div data-load="./templates/productTile" data-context=\'{"name": "Test Product", "url": "/test", "price": 12.99}\'></div>');
+            var check;
+            setTimeout(check = function() {
+                if (!div.querySelector('.product-tile')) {
+                    return setTimeout(check, 10);
+                }
+                assertEquals('style-productTile.js', document.querySelector('style').id, 'renders style tag');
+                assertEquals('.product-tile', document.querySelector('style').textContent.match(/\.product-tile/g)[0], 'style tag contains styles');
+                done();
+            }, 10);
+        });
+        it('re-renders the template if the data changes', done => {
+            var div = document.querySelector('div[data-load$="productTile"]');
+            div.context.price = 30.25;
+            refreshStore();
+            assertEquals('30.25', div.querySelector('.product-price').innerHTML.trim());
+            done();
+        });
     });
 });
 

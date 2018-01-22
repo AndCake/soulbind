@@ -84,7 +84,7 @@
         startNode = startNode || doc.body;
         context = context || store;             
         $(startNode, 'bind', function (binder, idx) {
-            if (binder.bindAttached) return;
+            if (binder.bindAttached || binder.dataset.load) return;
             binder.bindAttached = true;
             var pair = binder.dataset.bind.split(':');
             var target = pair[0];
