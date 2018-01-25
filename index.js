@@ -260,7 +260,7 @@
     handleDataAttributes();
 
     var loadFragment;
-    win.addEventListener('store-changed', function(event) {
+    win.addEventListener('store-changed', function() {
         $(doc.body, 'bind', function(bound) {
             if (bound.dataset.load) return;
             var pair = bound.dataset.bind.split(':');
@@ -310,7 +310,7 @@
                 return loadHandler(loadCache[toLoad]);
             }
         }
-        loadCache[toLoad] = fetch(basePath + toLoad).then(function(response){return response.text();}).then(function(jsCode) {
+        return loadCache[toLoad] = fetch(basePath + toLoad).then(function(response){return response.text();}).then(function(jsCode) {
             /* istanbul ignore next */
             var code = 'var module = {exports:{}};var require=function(path){return{render:function(data){return "<div data-load=\\"' + toLoad.replace(/\w+(\.\w+)?$/, '') + '" + path + "\\" data-context=\'" + JSON.stringify(data).replace(/\'/g, \'\\\'\') + "\'></div>";}}};' + jsCode + ';return module.exports;';
             var fn = new Function(code)();
@@ -329,6 +329,24 @@
             return fn;
         }).then(loadHandler);
     });
+
+    win.SoulBind = {
+        load: function(path, context, callback) {
+            var target = document.createElement('div');
+            if (typeof context === 'object') {
+                target.setAttribute('data-context', JSON.stringify(context));
+            } else if (typeof context === 'string') {
+                target.setAttribute('data-bind', context);
+            }
+            target.setAttribute('data-load', path);
+            loadFragment(target).then(function() {
+                callback(target);
+            });
+        },
+        storeChanged: function() {
+            triggerStoreUpdate();
+        }
+    };
 
     var mo = new MutationObserver(function(mutations) {
         for (var all in mutations) {
