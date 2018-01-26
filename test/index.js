@@ -4,6 +4,10 @@ function assertEquals(a, b, msg) {
     }
 }
 
+function assertContains(a, b, msg) {
+    assertEquals(true, b.indexOf(a) >= 0, 'Assertion failed: "' + b + '" contains "' + a + '". ' + (msg || ''));
+}
+
 function refreshStore() {
     var event = new Event('store-changed');
     window.dispatchEvent(event);
@@ -146,10 +150,25 @@ describe('soulbind', () => {
             setTimeout(function() {
                 var button = div.querySelector('button');
                 button.dispatchEvent(new Event('click'));
-                assertEquals(0, __SoulStore__.array.length, 'Value was toggled to false');
+                assertEquals(0, __SoulStore__.array.length, 'Value was removed from array');
                 done();
             }, 10);
         });
+/*
+        it('can pass over a context object', done => {
+            var div = appendElement(document.body, 'div', {}, '<button data-action="remove" data-context=\'{"array": ["Test1", "Test2"]}\'>remove first element</button>');
+            setTimeout(function() {
+                var button = div.querySelector('button');
+                button.context.remove = function(node, ctx) {
+                    console.log(node, ctx);
+                    ctx.array.shift();
+                };
+                button.dispatchEvent(new Event('click'));
+                assertEquals(1, button.context.array.length, 'Value was removed from array');
+                done();
+            }, 10);
+        });
+        */
     });
 
     describe('data-load', () => {
@@ -197,6 +216,73 @@ describe('soulbind', () => {
             refreshStore();
             assertEquals('30.25', div.querySelector('.product-price').innerHTML.trim());
             done();
+        });
+    });
+
+    describe('API use', () => {
+        it('can load a template', done => {
+            window.SoulBind.load('./templates/mainSlider', null).then(el => {
+                assertEquals('DIV', el.nodeName);
+                assertContains('Nothing here', el.innerHTML);
+                done();
+            });
+        });
+        it('can load a template with bound store value', done => {
+            window.SoulBind.load('./templates/mainSlider', 'testObject').then(el => {
+                assertEquals('DIV', el.nodeName);
+                assertContains('Test', el.innerHTML);
+                assertContains('Hello', el.innerHTML);
+                done();
+            }, err => {
+                console.error(err);
+                throw new Error('Unable to load templates/mainSlider');
+            });
+        });
+        it('can load a template with custom context', done => {
+            window.SoulBind.load('./templates/mainSlider', {
+                sliderItems: ['X123', 'Y234']
+            }).then(el => {
+                assertEquals('DIV', el.nodeName);
+                assertContains('X123', el.innerHTML);
+                assertContains('Y234', el.innerHTML);
+                done();
+            }, err => {
+                console.error(err);
+                throw new Error('Unable to load templates/mainSlider');
+            });
+        });
+        it('refreshes API-loaded templates when triggering store update', done => {
+            __SoulStore__.testObject2 = {
+                sliderItems: ['Test', 'Helo']
+            };
+            window.SoulBind.load('./templates/mainSlider', 'testObject2').then(el => {
+                assertEquals('DIV', el.nodeName);
+                assertContains('Test', el.innerHTML);
+                assertContains('Helo', el.innerHTML);
+
+                __SoulStore__.testObject2.sliderItems[1] = 'Just a value';
+                window.SoulBind.storeChanged();
+                assertContains('Test', el.innerHTML);
+                assertContains('Just a value', el.innerHTML);
+                done();
+            }, err => {
+                console.error(err);
+                throw new Error('Unable to load templates/mainSlider');
+            });
+        });
+    });
+
+    describe('memory management', () => {
+        it('cleans up loaded template bindings if the element is removed', done => {
+            var div = document.createElement('div');
+            div.appendChild(document.querySelector('[data-bind="testObject"]'));
+            document.body.appendChild(div);
+            document.body.innerHTML = '';
+            setTimeout(function() {
+                __SoulStore__.testObject.sliderItems.push('New Item');
+                window.SoulBind.storeChanged();
+                done();
+            }, 10);
         });
     });
 });

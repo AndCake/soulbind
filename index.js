@@ -280,10 +280,7 @@
                 }
             }
         });
-        templates.forEach(function(template, idx) {
-            if (!template.node.isConnected) {
-                return templates.splice(idx, 1);
-            }
+        each(templates, function(template) {
             template.render();
             handleDataAttributes(template.node, template.node.context);
         });
@@ -305,9 +302,9 @@
         if (!toLoad.match(/\.js$/)) toLoad += '.js';
         if (loadCache[toLoad]) {
             if (loadCache[toLoad] instanceof Promise) {
-                loadCache[toLoad].then(loadHandler);
+                return loadCache[toLoad].then(loadHandler);
             } else {
-                return loadHandler(loadCache[toLoad]);
+                return Promise.resolve(loadCache[toLoad]).then(loadHandler);
             }
         }
         return loadCache[toLoad] = fetch(basePath + toLoad).then(function(response){return response.text();}).then(function(jsCode) {
@@ -331,7 +328,7 @@
     });
 
     win.SoulBind = {
-        load: function(path, context, callback) {
+        load: function(path, context) {
             var target = document.createElement('div');
             if (typeof context === 'object') {
                 target.setAttribute('data-context', JSON.stringify(context));
@@ -339,8 +336,8 @@
                 target.setAttribute('data-bind', context);
             }
             target.setAttribute('data-load', path);
-            loadFragment(target).then(function() {
-                callback(target);
+            return loadFragment(target).then(function() {
+                return target;
             });
         },
         storeChanged: function() {
@@ -373,6 +370,13 @@
                     var idx = templates.lastIndexOf(affected.pop());
                     templates.splice(idx, 1);
                 }
+                node.nodeType === 1 && $(node, 'load', function(removed) {
+                    var affected = templates.filter(function(tpl) { return tpl.node === removed});
+                    while (affected.length > 0) {
+                        var idx = templates.lastIndexOf(affected.pop());
+                        templates.splice(idx, 1);
+                    }                        
+                });
             }
         }
     });
